@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, ReceiptText, ShieldAlert, Database, History, Sliders } from 'lucide-react';
+import { LayoutDashboard, ReceiptText, ShieldAlert, Database, History, Sliders, UserPlus } from 'lucide-react';
 
 interface SidebarProps {
   currentTab: string;
@@ -11,6 +11,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab, pendi
   const navItems = [
     { id: 'overview', label: 'Operations Hub', icon: LayoutDashboard },
     { id: 'disputes', label: 'Dispute Queue', icon: ReceiptText, badge: pendingCount > 0 ? pendingCount : null },
+    { id: 'portal', label: 'Customer Portal', icon: UserPlus },
     { id: 'policies', label: 'Policy Engine', icon: Sliders },
     { id: 'erp', label: 'ERPNext Mirror', icon: Database },
     { id: 'audit', label: 'Cryptographic Audit', icon: History },

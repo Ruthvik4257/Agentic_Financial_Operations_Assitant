@@ -8,6 +8,7 @@ import { InvestigationDossierModal } from './components/Dossier/InvestigationDos
 import { ERPNextLedgerView } from './components/ERPNextMirror/ERPNextLedgerView';
 import { CryptographicAuditView } from './components/AuditLedger/CryptographicAuditView';
 import { PolicyManagerView } from './components/PolicyEngine/PolicyManagerView';
+import { CustomerDisputePortal } from './components/CustomerPortal/CustomerDisputePortal';
 import { api } from './services/api';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Dispute, SystemMetrics, WebSocketEvent } from './types';
@@ -168,6 +169,8 @@ export const App: React.FC = () => {
               loading={loading}
             />
           )}
+
+          {currentTab === 'portal' && <CustomerDisputePortal />}
 
           {currentTab === 'policies' && <PolicyManagerView />}
 
