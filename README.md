@@ -11,31 +11,64 @@ An autonomous, auditable, enterprise-grade AI employee for corporate financial o
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ AI Orchestration Platform — System Architecture
 
-```
-                        ┌────────────────────────────────────────────────┐
-                        │             Dual External Channels             │
-                        │   1. Telegram Bot (aiogram 3 Long-Polling)     │
-                        │   2. React 18 Executive Hub (WebSockets/REST)  │
-                        └───────────────────────┬────────────────────────┘
-                                                │
-                                                ▼
-                        ┌────────────────────────────────────────────────┐
-                        │             FastAPI Unified Gateway            │
-                        │  • Sub-5ms Regex Entity Extractor              │
-                        │  • Gemini 2.0 Flash (Fraud & Reasoning)        │
-                        │  • LangGraph State Machine (HITL Interrupt)    │
-                        │  • Cryptographic SHA-256 Audit Ledger          │
-                        │  • SQLite WAL / Postgres Persistence           │
-                        └───────────────────────┬────────────────────────┘
-                                                │
-                                                ▼
-                        ┌────────────────────────────────────────────────┐
-                        │            Dual-Mode ERPNext Adapter           │
-                        │  • LIVE Mode: Real Frappe REST API             │
-                        │  • MOCK Mode: High-Fidelity Embedded Engine    │
-                        └────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    %% External Customers
+    subgraph External_Channels["Customer Channels"]
+        Customer["🧑‍💼 CUSTOMER<br/>Telegram / (Future WhatsApp)"]
+    end
+
+    %% AI Orchestration Platform
+    subgraph Cloud_Platform["AI Orchestration Platform — AWS EC2 + Docker Compose"]
+        FastAPI["⚡ FastAPI Backend<br/>• Telegram Webhook • REST APIs • Authentication • ERPNext Integration Layer"]
+        
+        LangGraph["🔄 LangGraph Orchestrator"]
+        
+        subgraph Agents_Subsystem["🤖 Agents"]
+            Planner["Planner"]
+            Support["Support"]
+            Payment["Payment"]
+            Fraud["Fraud"]
+            Decision["Decision"]
+            Audit["Audit"]
+        end
+        
+        ToolLayer["🔧 Tool Calling Layer"]
+        
+        FastAPI --> LangGraph
+        LangGraph --> Planner & Support & Payment & Fraud & Decision & Audit
+        Planner & Support & Payment & Fraud & Decision & Audit --> ToolLayer
+    end
+
+    %% External Intelligence & Systems
+    subgraph Intelligence_Layer["AI & Integration Tier"]
+        ERPClient["📑 ERPNext Client<br/>(System of Record)"]
+        GeminiAPI["✨ Gemini API<br/>(Complex Reasoning)"]
+        HFModel["🤗 HuggingFace / Fast Classifier<br/>(Routine Tasks)"]
+    end
+
+    %% ERPNext Stack
+    subgraph ERPNext_System["ERPNext Stack (System of Record)"]
+        ERPNext_Core["📦 ERPNext Core<br/>• Customers • Contacts • Payments • Invoices<br/>• Refund Requests • Support Tickets • Approval Workflow • Audit Records"]
+        MariaDB[("🦭 MariaDB")]
+        ERPNext_Core --> MariaDB
+    end
+
+    %% Operations Hub
+    subgraph Operations_Dashboard["Internal Operations Dashboard"]
+        ReactUI["⚛️ React UI<br/>• Pending Approvals • AI Reasoning<br/>• Audit Timeline • Customer Details • Refund Actions"]
+    end
+
+    %% Connections
+    Customer -->|Telegram Webhook| FastAPI
+    ToolLayer --> ERPClient
+    ToolLayer --> GeminiAPI
+    ToolLayer --> HFModel
+    ToolLayer --> ReactUI
+    ERPClient -->|REST API| ERPNext_Core
+    ReactUI -->|REST & WebSockets| FastAPI
 ```
 
 ---
@@ -57,7 +90,6 @@ uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # 2. Run React Operations Hub (In separate terminal)
 cd frontend
-npm install
 npm run dev
 ```
 
@@ -74,7 +106,7 @@ npm run dev
 2. **Act II (Autonomous Resolution via Telegram)**:
    - Open Telegram and message the bot: `"Hi, I was double charged for invoice INV-2026-001 ($150.00)."`
    - The AI employee responds in $<2$ seconds, verifies the duplicate in ERPNext, scores risk at `0.08` (Safe), posts the refund `Payment Entry` to ERPNext, and returns the confirmation receipt.
-   - The React Dashboard live stream updates automatically via WebSockets.
+   - The React Hub live stream updates simultaneously via WebSockets.
 3. **Act III (Human-in-the-Loop Financial Governance)**:
    - Message the bot: `"Requesting $850.00 refund on invoice INV-2026-045."`
    - High-value threshold ($>\$200.00$) pauses autonomous execution and pushes an interactive card to the Finance Manager on Telegram: `[✅ Approve $850.00]` `[❌ Reject]`.
