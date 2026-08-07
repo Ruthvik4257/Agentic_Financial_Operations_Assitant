@@ -10,6 +10,7 @@ import { CryptographicAuditView } from './components/AuditLedger/CryptographicAu
 import { api } from './services/api';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Dispute, SystemMetrics, WebSocketEvent } from './types';
+import { Sparkles, Zap, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('overview');
@@ -17,6 +18,7 @@ export const App: React.FC = () => {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedDossier, setSelectedDossier] = useState<any | null>(null);
+  const [simulating, setSimulating] = useState<boolean>(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -32,7 +34,6 @@ export const App: React.FC = () => {
   }, []);
 
   const handleWebSocketEvent = useCallback((event: WebSocketEvent) => {
-    // Refresh metrics & table on financial events
     loadData();
   }, [loadData]);
 
@@ -61,6 +62,24 @@ export const App: React.FC = () => {
     loadData();
   };
 
+  const handleTriggerSimulation = async (scenario: 'double_charge' | 'high_value' | 'fraud') => {
+    setSimulating(true);
+    try {
+      if (scenario === 'double_charge') {
+        await api.simulateDispute('INV-2026-001', 150.00, 'Customer charged twice for seat license');
+      } else if (scenario === 'high_value') {
+        await api.simulateDispute('INV-2026-045', 850.00, 'Customer disputing dedicated enterprise support surcharge');
+      } else {
+        await api.simulateDispute('INV-2026-102', 2500.00, 'High anomaly overseas chargeback claim');
+      }
+      await loadData();
+    } catch (e) {
+      console.error('Simulation failed', e);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const pendingCount = disputes.filter((d) => d.status === 'AWAITING_APPROVAL').length;
 
   return (
@@ -79,6 +98,38 @@ export const App: React.FC = () => {
 
         {/* Dynamic Content Body */}
         <main className="flex-1 p-8 overflow-y-auto max-w-7xl mx-auto space-y-6 w-full">
+          {/* Quick Simulation Toolbar for Live Demos & Judges */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-purple-900/30 border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Sparkles className="w-4 h-4 animate-spin" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white tracking-wide uppercase">Interactive Demo Simulation Deck</div>
+                <div className="text-[11px] text-gray-400">Trigger live financial scenarios to test LangGraph, Gemini & ERPNext</div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleTriggerSimulation('double_charge')}
+                disabled={simulating}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition flex items-center space-x-1.5"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Simulate $150 (Auto-Approve)</span>
+              </button>
+              <button
+                onClick={() => handleTriggerSimulation('high_value')}
+                disabled={simulating}
+                className="px-3 py-1.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center space-x-1.5"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Simulate $850 (HITL Gate)</span>
+              </button>
+            </div>
+          </div>
+
           {currentTab === 'overview' && (
             <div className="space-y-6">
               {/* FinOps KPI Cards */}

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import uuid
 from typing import Optional
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
@@ -60,7 +61,7 @@ if dp:
         extracted = FastEntityExtractor.extract_entities(user_text)
         invoice_id = extracted.get("invoice_id") or "INV-2026-001"
         amount = extracted.get("amount") or 150.00
-        dispute_id = f"DISP-{invoice_id}"
+        dispute_id = f"DISP-{invoice_id}-{uuid.uuid4().hex[:6].upper()}"
 
         # 1. Immediate Customer Feedback
         status_msg = await message.answer(
@@ -71,7 +72,7 @@ if dp:
 
         # 2. Database Record & LangGraph Execution
         async with AsyncSessionLocal() as session:
-            # Create or update dispute
+            # Create unique dispute record
             dispute = Dispute(
                 id=dispute_id,
                 customer_id="CUST-001",
@@ -187,6 +188,7 @@ if dp:
         await query.answer(f"Processing {decision} in ERPNext...")
 
         async with AsyncSessionLocal() as session:
+            from sqlalchemy import select
             stmt = select(Dispute).where(Dispute.id == dispute_id)
             res = await session.execute(stmt)
             dispute = res.scalar_one_or_none()

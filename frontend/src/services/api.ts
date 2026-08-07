@@ -17,6 +17,17 @@ export const api = {
     return res.data;
   },
 
+  simulateDispute: async (invoiceId: string, amount: number, reason: string) => {
+    const res = await axios.post(`${API_BASE}/disputes/simulate`, {
+      customer_id: 'CUST-001',
+      invoice_id: invoiceId,
+      amount: amount,
+      reason: reason,
+      currency: 'USD',
+    });
+    return res.data;
+  },
+
   getDisputeDossier: async (disputeId: string) => {
     const res = await axios.get(`${API_BASE}/disputes/${disputeId}`);
     return res.data;
