@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.core.database import init_db
 from backend.app.api.router import api_router
+from backend.app.api.v1.websocket import router as ws_router
 from backend.app.services.telegram_service import start_telegram_bot
 from backend.app.services.erpnext_mock import get_erp_client
 
@@ -14,7 +15,6 @@ async def lifespan(app: FastAPI):
     await init_db()
     await start_telegram_bot()
     yield
-    # Teardown logic if needed
 
 
 app = FastAPI(
@@ -27,13 +27,14 @@ app = FastAPI(
 # Enable CORS for React Frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else ["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register API Router
+# Register API & WebSocket Routers at both root and /api/v1
+app.include_router(ws_router)
 app.include_router(api_router)
 
 
