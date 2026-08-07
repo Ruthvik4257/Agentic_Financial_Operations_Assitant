@@ -7,10 +7,11 @@ import { DisputeTable } from './components/DisputeQueue/DisputeTable';
 import { InvestigationDossierModal } from './components/Dossier/InvestigationDossierModal';
 import { ERPNextLedgerView } from './components/ERPNextMirror/ERPNextLedgerView';
 import { CryptographicAuditView } from './components/AuditLedger/CryptographicAuditView';
+import { PolicyManagerView } from './components/PolicyEngine/PolicyManagerView';
 import { api } from './services/api';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Dispute, SystemMetrics, WebSocketEvent } from './types';
-import { Sparkles, Zap, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Zap, ShieldAlert } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('overview');
@@ -167,6 +168,8 @@ export const App: React.FC = () => {
               loading={loading}
             />
           )}
+
+          {currentTab === 'policies' && <PolicyManagerView />}
 
           {currentTab === 'erp' && <ERPNextLedgerView />}
 
