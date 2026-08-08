@@ -1,0 +1,11 @@
+node_modules
+dist
+.venv
+venv
+__pycache__
+*.pyc
+.git
+.agents
+data/*.db
+data/finops.db*
+.DS_Store
