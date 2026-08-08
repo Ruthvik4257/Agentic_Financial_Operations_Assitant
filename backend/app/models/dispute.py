@@ -54,6 +54,7 @@ class Dispute(Base):
     # ERPNext Execution Reference
     erp_payment_entry_id = Column(String(64), nullable=True)
     erp_refund_status = Column(String(32), nullable=True)
+    telegram_chat_id = Column(String(64), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

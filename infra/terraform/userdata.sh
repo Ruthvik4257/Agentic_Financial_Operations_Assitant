@@ -37,3 +37,40 @@ ERPNEXT_MODE=mock
 MAX_AUTO_REFUND_LIMIT=200.00
 MAX_FRAUD_RISK_THRESHOLD=0.30
 EOF
+
+# Ensure data directory exists for database persistence
+mkdir -p /opt/finops/data
+
+# Pull pre-built containers from Docker Hub (suryadocker0) and run
+cat <<EOF > docker-compose.yml
+version: '3.8'
+
+services:
+  backend:
+    image: suryadocker0/finops-backend:latest
+    container_name: finops-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    image: suryadocker0/finops-frontend:latest
+    container_name: finops-frontend
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: finops-net
+EOF
+
+docker compose up -d
+

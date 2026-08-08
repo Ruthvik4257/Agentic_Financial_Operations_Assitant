@@ -5,8 +5,10 @@ import asyncio
 from typing import Dict, Any, Optional
 from backend.app.core.config import settings
 from agents.state import FraudAssessment
+from agents.models.hf_financial_models import hf_financial_model
 
 logger = logging.getLogger("FinOpsLLM")
+
 
 
 class GeminiForensicClient:
@@ -22,6 +24,7 @@ class GeminiForensicClient:
         
         if self.api_key and not self.api_key.startswith("your_"):
             try:
+                # pyrefly: ignore [missing-import]
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
                 self._client = genai.GenerativeModel(self.model_name)
@@ -87,36 +90,48 @@ class GeminiForensicClient:
                     accounting_justification=str(parsed.get("accounting_justification", "Reconciled with ERPNext ledger.")),
                 )
             except Exception as e:
-                logger.warning("Gemini call timed out or failed: %s. Using instant deterministic heuristic fallback.", e)
+                logger.warning("Gemini call timed out or failed: %s. Using Hugging Face Financial helper model.", e)
 
-        # Instant High-Fidelity Heuristic Fallback
-        if is_duplicate:
-            return FraudAssessment(
-                risk_score=0.08,
-                risk_tier="LOW",
-                duplicate_payment_confirmed=True,
-                anomaly_flags=["DUPLICATE_PAYMENT_ENTRY_MATCHED"],
-                forensic_summary=f"ERPNext ledger confirms 2 distinct payment entries for Invoice {invoice_id}. Customer was billed twice.",
-                accounting_justification=f"Reverse Payment Entry of ${amount:.2f} will balance Debtors ledger 2110 with Bank 1110.",
-            )
-        elif amount > 500.0:
-            return FraudAssessment(
-                risk_score=0.45,
-                risk_tier="MEDIUM",
-                duplicate_payment_confirmed=False,
-                anomaly_flags=["HIGH_VALUE_TRANSACTION"],
-                forensic_summary=f"High-value dispute of ${amount:.2f} exceeds standard autonomous threshold.",
-                accounting_justification="Requires Human-in-the-Loop manager authorization prior to ledger entry.",
-            )
-        else:
-            return FraudAssessment(
-                risk_score=0.18,
-                risk_tier="LOW",
-                duplicate_payment_confirmed=False,
-                anomaly_flags=[],
-                forensic_summary=f"Dispute claim of ${amount:.2f} on {invoice_id} matches verified customer dispute window.",
-                accounting_justification="Standard refund policy applies.",
-            )
+        # Hugging Face Financial Helper Model Integration
+        hf_risk = await hf_financial_model.analyze_dispute_risk(
+            amount=amount,
+            dispute_reason=dispute_reason,
+            is_duplicate=is_duplicate,
+            customer_profile=customer_profile,
+        )
+
+        return FraudAssessment(
+            risk_score=float(hf_risk["risk_score"]),
+            risk_tier=str(hf_risk["risk_tier"]),
+            duplicate_payment_confirmed=bool(is_duplicate),
+            anomaly_flags=list(hf_risk["anomaly_flags"]),
+            forensic_summary=str(hf_risk["forensic_summary"]),
+            accounting_justification=str(hf_risk["accounting_justification"]),
+        )
 
 
 llm_client = GeminiForensicClient()
+
+
+def get_langchain_gemini_llm(model_name: Optional[str] = None, temperature: float = 0.1):
+    """
+    Returns a LangChain ChatGoogleGenerativeAI instance using the unified GEMINI_API_KEY.
+    Provides logical reasoning, thinking brain capabilities, and chain/agent compatibility.
+    """
+    api_key = settings.GEMINI_API_KEY
+    chosen_model = model_name or settings.GEMINI_MODEL
+
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        if api_key and not api_key.startswith("your_"):
+            return ChatGoogleGenerativeAI(
+                model=chosen_model,
+                google_api_key=api_key,
+                temperature=temperature,
+            )
+    except Exception as e:
+        logger.warning("Could not initialize langchain_google_genai (%s). Falling back to direct Gemini client.", e)
+
+    return llm_client
+
+

@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   backend:
+    image: suryadocker0/finops-backend:latest
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
@@ -32,6 +33,7 @@ services:
       retries: 3
 
   frontend:
+    image: suryadocker0/finops-frontend:latest
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile

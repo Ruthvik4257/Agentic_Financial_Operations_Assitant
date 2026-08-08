@@ -103,4 +103,26 @@ async def process_approval_decision(
 
     await db.commit()
     await db.refresh(dispute)
+
+    # 4. Proactively notify customer on Telegram in real time
+    try:
+        from backend.app.services.telegram_service import notify_customer_refund_status
+        import asyncio
+        asyncio.create_task(
+            notify_customer_refund_status(
+                customer_id=dispute.customer_id,
+                dispute_id=dispute.id,
+                invoice_id=dispute.invoice_id,
+                amount=dispute.amount,
+                status=dispute.status.value,
+                payment_entry_id=dispute.erp_payment_entry_id,
+                currency=dispute.currency,
+                manager_notes=action.manager_notes,
+                chat_id=dispute.telegram_chat_id,
+            )
+        )
+    except Exception:
+        pass
+
     return {"success": True, "status": dispute.status.value, "erp_payment_entry": dispute.erp_payment_entry_id}
+

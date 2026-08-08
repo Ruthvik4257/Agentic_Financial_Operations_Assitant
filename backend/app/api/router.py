@@ -8,6 +8,8 @@ from backend.app.api.v1.gateways import router as gateways_router
 from backend.app.api.v1.policies import router as policies_router
 from backend.app.api.v1.compliance import router as compliance_router
 from backend.app.api.v1.settlements import router as settlements_router
+from backend.app.api.v1.logs import router as logs_router
+from backend.app.api.v1.customer_support import router as customer_support_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -20,3 +22,7 @@ api_router.include_router(gateways_router)
 api_router.include_router(policies_router)
 api_router.include_router(compliance_router)
 api_router.include_router(settlements_router)
+api_router.include_router(logs_router)
+api_router.include_router(customer_support_router)
+
+

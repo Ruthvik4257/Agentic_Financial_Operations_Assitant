@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import pytest
 from agents.graph import finops_agent
 from agents.state import DisputeRecord
@@ -11,6 +12,20 @@ async def test_fast_entity_extractor():
     assert extracted["invoice_id"] == "INV-2026-001"
     assert extracted["amount"] == 150.00
     assert extracted["intent"] == "DOUBLE_CHARGE"
+
+
+@pytest.mark.asyncio
+async def test_huggingface_natural_language_extraction():
+    text = "i have been charged 200 dollars"
+    extracted = FastEntityExtractor.extract_entities(text)
+    assert extracted["amount"] == 200.00
+    assert extracted["currency"] == "USD"
+
+    text2 = "I was double charged two hundred dollars on invoice 045"
+    extracted2 = FastEntityExtractor.extract_entities(text2)
+    assert extracted2["amount"] == 200.00
+    assert extracted2["intent"] == "DOUBLE_CHARGE"
+    assert extracted2["invoice_id"] == "INV-2026-045"
 
 
 @pytest.mark.asyncio
@@ -56,3 +71,4 @@ async def test_langgraph_hitl_escalation_flow():
     
     assert result["policy_verdict"] == "REQUIRE_HITL"
     assert "Human-in-the-Loop" in result["policy_reason"]
+

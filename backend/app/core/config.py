@@ -60,3 +60,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Automatically propagate GEMINI_API_KEY to GOOGLE_API_KEY for LangChain / LangGraph ecosystem
+if settings.GEMINI_API_KEY:
+    os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
+    os.environ["GOOGLE_API_KEY"] = settings.GEMINI_API_KEY

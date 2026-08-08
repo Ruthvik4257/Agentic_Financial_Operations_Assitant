@@ -5,8 +5,8 @@ from agents.models.fast_classifier import FastEntityExtractor
 
 async def supervisor_node(state: AgentState) -> Dict[str, Any]:
     """
-    Supervisor Node: Extracts entities, normalizes customer message,
-    and polymorphically sets up dispute context for the LangGraph pipeline.
+    Supervisor Node: Extracts entities via Hugging Face Financial helper models,
+    normalizes customer message, and polymorphically sets up dispute context.
     """
     messages = state.get("messages", [])
     last_message = messages[-1]["content"] if messages else ""
@@ -21,11 +21,11 @@ async def supervisor_node(state: AgentState) -> Dict[str, Any]:
     ext_cust = getattr(existing, 'customer_id', 'CUST-001')
     ext_reason = getattr(existing, 'reason', last_message)
 
-    invoice_id = extracted.get("invoice_id") or ext_inv or "INV-2026-001"
-    amount = extracted.get("amount") or ext_amt or 150.0
+    amount = extracted.get("amount") or ext_amt or 200.0
+    invoice_id = extracted.get("invoice_id") or ext_inv or (f"INV-2026-{int(amount)}" if amount else "INV-2026-001")
     dispute_id = ext_id or f"DISP-{invoice_id}"
     customer_id = ext_cust or "CUST-001"
-    reason = last_message or ext_reason or "Customer dispute claim"
+    reason = last_message or ext_reason or "Customer payment dispute"
 
     dispute = DisputeRecord(
         dispute_id=dispute_id,
@@ -41,3 +41,4 @@ async def supervisor_node(state: AgentState) -> Dict[str, Any]:
         "dispute": dispute,
         "current_node": "SupervisorNode",
     }
+

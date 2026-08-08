@@ -83,6 +83,23 @@ async def ingest_stripe_dispute(
             "payment_entry": exec_res.get("payment_entry_id"),
             "amount": payload.amount,
         })
+
+        try:
+            from backend.app.services.telegram_service import notify_customer_refund_status
+            import asyncio
+            asyncio.create_task(
+                notify_customer_refund_status(
+                    customer_id=dispute.customer_id,
+                    dispute_id=dispute.id,
+                    invoice_id=dispute.invoice_id,
+                    amount=dispute.amount,
+                    status="EXECUTED",
+                    payment_entry_id=exec_res.get("payment_entry_id"),
+                    currency=dispute.currency,
+                )
+            )
+        except Exception:
+            pass
     elif verdict == "REQUIRE_HITL":
         dispute.status = DisputeStatus.AWAITING_APPROVAL
         await db.commit()

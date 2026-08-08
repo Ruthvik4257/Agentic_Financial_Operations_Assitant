@@ -1,46 +1,19 @@
 import re
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
+from agents.models.hf_financial_models import HuggingFaceFinancialModel, hf_financial_model
 
 
 class FastEntityExtractor:
     """
-    Sub-5ms deterministic token extractor for financial operations.
-    Extracts invoice numbers (INV-YYYY-XXX), amounts ($XXX.XX), and transaction hashes.
+    High-accuracy Financial Entity & Token Extractor powered by
+    Hugging Face Financial helper models and multi-pattern NLP tokenizers.
+    Extracts invoice numbers (INV-YYYY-XXX), natural language amounts ($200, 200 dollars, two hundred),
+    transaction hashes, and financial dispute intents.
     """
-
-    INVOICE_REGEX = re.compile(r"\b(INV-\d{4}-\d{3,4})\b", re.IGNORECASE)
-    AMOUNT_REGEX = re.compile(r"(?:\$|USD\s*)(\d+(?:\.\d{1,2})?)", re.IGNORECASE)
-    TX_HASH_REGEX = re.compile(r"\b(TX-[A-Z0-9-]+|0x[a-fA-F0-9]{8,64})\b", re.IGNORECASE)
-    
-    INTENT_KEYWORDS = {
-        "DOUBLE_CHARGE": ["double", "charged twice", "two times", "duplicate", "billed twice"],
-        "REFUND_REQUEST": ["refund", "money back", "reimburse", "return funds"],
-        "INVOICE_STATUS": ["status", "check invoice", "where is", "is paid", "outstanding"],
-        "OVERCHARGE": ["overcharge", "wrong amount", "too much", "incorrect"],
-    }
 
     @classmethod
     def extract_entities(cls, text: str) -> Dict[str, Any]:
-        invoice_match = cls.INVOICE_REGEX.search(text)
-        amount_match = cls.AMOUNT_REGEX.search(text)
-        tx_match = cls.TX_HASH_REGEX.search(text)
+        extracted = HuggingFaceFinancialModel.extract_financial_entities(text)
+        extracted["raw_text"] = text
+        return extracted
 
-        invoice_id = invoice_match.group(1).upper() if invoice_match else None
-        amount = float(amount_match.group(1)) if amount_match else None
-        tx_hash = tx_match.group(1) if tx_match else None
-
-        # Intent detection
-        lower_text = text.lower()
-        detected_intent = "GENERAL_INQUIRY"
-        for intent, keywords in cls.INTENT_KEYWORDS.items():
-            if any(kw in lower_text for kw in keywords):
-                detected_intent = intent
-                break
-
-        return {
-            "invoice_id": invoice_id,
-            "amount": amount,
-            "tx_hash": tx_hash,
-            "intent": detected_intent,
-            "raw_text": text,
-        }

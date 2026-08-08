@@ -51,6 +51,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables and run lightweight migrations for SQLite."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if "sqlite" in settings.DATABASE_URL:
+            def _migrate_columns(sync_conn):
+                from sqlalchemy import text
+                res = sync_conn.execute(text("PRAGMA table_info(disputes)"))
+                cols = {row[1] for row in res.fetchall()}
+                if cols and "telegram_chat_id" not in cols:
+                    sync_conn.execute(text("ALTER TABLE disputes ADD COLUMN telegram_chat_id VARCHAR(64)"))
+            await conn.run_sync(_migrate_columns)
+

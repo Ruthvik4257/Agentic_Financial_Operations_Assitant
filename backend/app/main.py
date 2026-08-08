@@ -7,11 +7,13 @@ from backend.app.api.router import api_router
 from backend.app.api.v1.websocket import router as ws_router
 from backend.app.services.telegram_service import start_telegram_bot
 from backend.app.services.erpnext_mock import get_erp_client
+from backend.app.services.log_service import setup_sql_logging
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Initialize DB and Telegram Bot
+    # Startup: Initialize SQL Logging, Database Tables, and Telegram Bot
+    setup_sql_logging()
     await init_db()
     await start_telegram_bot()
     yield
