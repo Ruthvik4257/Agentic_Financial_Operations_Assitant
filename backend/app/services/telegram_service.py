@@ -165,6 +165,9 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
+                InlineKeyboardButton(text="👤 Past Transactions by Username", callback_data="menu:user_lookup"),
+            ],
+            [
                 InlineKeyboardButton(text="💳 Payment Issues", callback_data="menu:payment_issues"),
                 InlineKeyboardButton(text="💰 Refund Requests", callback_data="menu:refund_requests"),
             ],
@@ -195,6 +198,9 @@ def get_auth_method_keyboard() -> InlineKeyboardMarkup:
     """Options for identity verification."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                InlineKeyboardButton(text="👤 Username / Full Name", callback_data="auth_method:username"),
+            ],
             [
                 InlineKeyboardButton(text="📱 Mobile Number", callback_data="auth_method:mobile"),
                 InlineKeyboardButton(text="📧 Email Address", callback_data="auth_method:email"),
@@ -455,7 +461,18 @@ async def handle_auth_method(query: CallbackQuery):
     session.awaiting_input = "auth_identifier"
     await query.answer()
 
-    if method == "mobile":
+    if method == "username":
+        prompt = (
+            "👤 *Enter Your Username or Full Name*\n\n"
+            "Please type your registered username or name:\n\n"
+            "_Examples_:\n"
+            "• `Rahul Sharma`\n"
+            "• `Sarah Jenkins`\n"
+            "• `Vikramaditya Roy`\n"
+            "• `Elena Rostova`\n"
+            "• `David Miller`"
+        )
+    elif method == "mobile":
         prompt = (
             "Please enter your registered mobile number.\n\n"
             "_Example_:\n`9876543210`"
@@ -472,6 +489,131 @@ async def handle_auth_method(query: CallbackQuery):
         )
 
     await query.message.edit_text(prompt, parse_mode="Markdown")
+
+
+async def render_customer_past_transactions(message: Message, session: UserSession, cust_dict: Dict[str, Any]):
+    """
+    Renders past invoices/transactions with customer account summary and 1-Click Refund Action buttons.
+    """
+    cust_id = cust_dict.get("id") or cust_dict.get("customer_id") or cust_dict.get("name", "CUST-00045")
+    cust_name = cust_dict.get("customer_name", "Valued Customer")
+    email = cust_dict.get("email") or cust_dict.get("email_id") or cust_dict.get("registered_email", "user@finops.com")
+    mobile = cust_dict.get("mobile") or cust_dict.get("mobile_no") or cust_dict.get("registered_mobile", "9876543210")
+    tier = cust_dict.get("loyalty_tier", "Platinum")
+    group = cust_dict.get("customer_group", "Retail Banking")
+
+    session.is_verified = True
+    session.customer_id = cust_id
+    session.customer_name = cust_name
+    session.registered_email = email
+    session.registered_mobile = mobile
+    session.customer_group = group
+    session.loyalty_tier = tier
+    customer_chat_map[cust_id] = message.chat.id
+
+    client = get_erp_client()
+    txs = await client.get_customer_transactions(cust_id)
+
+    header = (
+        f"👤 *Customer Account Located*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"• *Name*: *{cust_name}*\n"
+        f"• *Customer ID*: `{cust_id}`\n"
+        f"• *Loyalty Tier*: `{tier}` | *Group*: `{group}`\n"
+        f"• *Email*: `{mask_email(email)}`\n"
+        f"• *Phone*: `{mask_phone(mobile)}`\n\n"
+        f"📜 *Past Invoices & Transactions ({len(txs)} Records)*:\n"
+    )
+
+    buttons = []
+    if not txs:
+        header += "_No transaction records found for this account._\n"
+    else:
+        for idx, t in enumerate(txs[:5], start=1):
+            inv_name = t.get("name") or t.get("id", f"INV-2026-00{idx}")
+            date = t.get("posting_date", "2026-08-01")
+            total = float(t.get("grand_total", 0.0))
+            curr = t.get("currency", "INR")
+            item = t.get("item_name") or (t.get("items", [{}])[0].get("item_name") if t.get("items") else "Financial Operations License")
+            status = t.get("status", "Paid")
+
+            curr_sym = "₹" if curr == "INR" else "$"
+            header += (
+                f"\n*{idx}. Invoice `{inv_name}`*\n"
+                f"   📅 Date: `{date}` | 🟢 Status: `{status}`\n"
+                f"   📦 Item: _{item}_\n"
+                f"   💰 Total: *{curr_sym}{total:,.2f} {curr}*\n"
+            )
+
+            # Add 1-click refund button for each transaction
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"💰 Request Refund for {inv_name} ({curr_sym}{total:,.0f})",
+                    callback_data=f"req_refund:{inv_name}:{total}:{curr}",
+                )
+            ])
+
+    buttons.append([
+        InlineKeyboardButton(text="🤖 Talk to AI Assistant", callback_data="menu:talk_to_ai"),
+        InlineKeyboardButton(text="🏠 Main Menu", callback_data="nav:main_menu"),
+    ])
+
+    await message.answer(
+        header + "\n👇 *Tap a button below to request an instant automated refund:*",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        parse_mode="Markdown",
+    )
+
+
+@router.callback_query(F.data.startswith("req_refund:"))
+async def handle_one_click_refund_request(query: CallbackQuery):
+    """
+    1-Click refund button callback triggered directly from past transactions list.
+    """
+    parts = query.data.split(":")
+    inv_id = parts[1]
+    amount = float(parts[2]) if len(parts) > 2 else 2350.00
+    currency = parts[3] if len(parts) > 3 else "INR"
+
+    session = get_or_create_session(query.from_user.id)
+    session.temp_invoice_id = inv_id
+    session.temp_amount = amount
+    await query.answer(f"Initiating refund investigation for {inv_id}...")
+
+    await run_investigation_workflow(
+        message=query.message,
+        session=session,
+        invoice_id=inv_id,
+        amount=amount,
+        user_note=f"Customer {session.customer_name} clicked 1-Click refund on {inv_id} for {currency} {amount:,.2f}",
+    )
+
+
+@router.callback_query(F.data == "menu:user_lookup")
+async def handle_user_lookup_menu(query: CallbackQuery):
+    """Entry point for username-based transaction lookup."""
+    session = get_or_create_session(query.from_user.id)
+    session.auth_method = "username"
+    session.awaiting_input = "auth_identifier"
+    await query.answer()
+
+    prompt = (
+        "👤 *Search Past Transactions by Username*\n\n"
+        "Please type your **Username** or **Full Name** to fetch all your invoices:\n\n"
+        "_Demo Showcase Profiles_:\n"
+        "• `Rahul Sharma` (Double Charge / Refund)\n"
+        "• `Sarah Jenkins` ($180 Pro Cluster)\n"
+        "• `Vikramaditya Roy` (₹14,500 Dedicated Line)\n"
+        "• `Elena Rostova` ($134 Webhook Tier)\n"
+        "• `David Miller` ($149 POS Smart Terminal)"
+    )
+    await query.message.edit_text(
+        prompt,
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[*get_nav_footer("nav:main_menu")]
+        ),
+        parse_mode="Markdown",
+    )
 
 
 @router.callback_query(F.data.startswith("auth_confirm:"))
@@ -893,61 +1035,111 @@ async def run_investigation_workflow(
 
 
 # ==============================================================================
-# TEXT INPUT DISPATCHER (State-Aware Input Collection)
+# USERNAME PAST TRANSACTION COMMANDS & NATURAL LANGUAGE HANDLERS
+# ==============================================================================
+@router.message(Command("user"))
+@router.message(Command("username"))
+@router.message(Command("history"))
+@router.message(Command("transactions"))
+async def handle_user_command(message: Message):
+    """
+    Direct slash command: /user <username>, /history <username>, or /transactions <username>
+    Fetches and displays customer account details, past transactions, and 1-Click refund buttons.
+    """
+    args = message.text.split(maxsplit=1)
+    session = get_or_create_session(message.from_user.id)
+
+    if len(args) < 2:
+        session.auth_method = "username"
+        session.awaiting_input = "auth_identifier"
+        await message.answer(
+            "👤 *Past Transactions by Username*\n\n"
+            "Please provide your username or name:\n\n"
+            "_Usage_: `/user Rahul Sharma` or `/user Sarah Jenkins`",
+            parse_mode="Markdown",
+        )
+        return
+
+    query_user = args[1].strip()
+    client = get_erp_client()
+    matches = await client.find_customer_by_identifier("username", query_user)
+    if not matches:
+        matches = await client.find_customer_by_identifier("any", query_user)
+
+    if matches:
+        await render_customer_past_transactions(message, session, matches[0])
+    else:
+        await message.answer(
+            f"❌ Could not find an active account matching `{query_user}`.\n\n"
+            f"Try one of our demo profiles: `Rahul Sharma`, `Sarah Jenkins`, `Vikramaditya Roy`, `Elena Rostova`, `David Miller`.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="👤 Search by Username", callback_data="menu:user_lookup")]]
+            ),
+            parse_mode="Markdown",
+        )
+
+
+@router.message(Command("refund"))
+async def handle_refund_command(message: Message):
+    """
+    Direct slash command: /refund <invoice_id> [amount]
+    Triggers the autonomous AI refund investigation immediately.
+    """
+    args = message.text.split()
+    session = get_or_create_session(message.from_user.id)
+
+    inv_id = args[1].strip().upper() if len(args) > 1 else "INV-2026-001"
+    amt = float(args[2]) if len(args) > 2 else 2350.00
+    await run_investigation_workflow(message, session, inv_id, amt, user_note=f"Command /refund {inv_id}")
+
+
+# ==============================================================================
+# TEXT INPUT DISPATCHER (State-Aware Input Collection & Natural Language Extraction)
 # ==============================================================================
 @router.message(F.text)
 async def handle_user_text_input(message: Message):
     """
-    Handles state-aware customer text input (Identification, manual invoice, or natural query).
+    Handles state-aware customer text input (Username lookup, manual invoice, or natural query).
     """
     session = get_or_create_session(message.from_user.id)
     text = message.text.strip()
 
-    # 1. Identity Verification Input
+    # 1. Identity Verification / Username Input
     if session.awaiting_input == "auth_identifier":
         session.awaiting_input = None
-        method = session.auth_method or "mobile"
+        method = session.auth_method or "username"
 
-        loading = await message.answer("🔍 *Searching ERPNext records via FastAPI...*", parse_mode="Markdown")
-        
-        # FastAPI verify call
-        req = CustomerVerificationRequest(
-            identifier_type=method,
-            identifier_value=text,
-        )
-        res = await verify_customer(req)
-        
-        if res.success and res.customer:
-            cust = res.customer
-            session.customer_id = cust.get("customer_id")
-            session.customer_name = cust.get("customer_name")
-            session.registered_email = cust.get("registered_email")
-            session.registered_mobile = cust.get("registered_mobile")
-            session.customer_group = cust.get("customer_group")
-            session.loyalty_tier = cust.get("loyalty_tier")
+        loading = await message.answer("🔍 *Searching database records...*", parse_mode="Markdown")
+        client = get_erp_client()
+        matches = await client.find_customer_by_identifier(method, text)
+        if not matches:
+            matches = await client.find_customer_by_identifier("any", text)
 
-            confirm_text = (
-                f"Hello {session.customer_name} 👋\n\n"
-                f"We found your account.\n\n"
-                f"Registered Email\n`{session.registered_email}`\n\n"
-                f"Customer ID\n`{session.customer_id}`"
-            )
-            await loading.edit_text(confirm_text, reply_markup=get_auth_confirm_keyboard(), parse_mode="Markdown")
-        elif res.matches_count > 1:
-            await loading.edit_text(
-                "Multiple customer accounts found with this identifier.\n\n"
-                "Please choose another identifier method:",
-                reply_markup=get_auth_method_keyboard(),
-            )
+        if matches:
+            cust = matches[0]
+            await loading.delete()
+            await render_customer_past_transactions(message, session, cust)
         else:
             await loading.edit_text(
-                "We couldn't locate your account.",
+                "We couldn't locate an account with that identifier.\n\n"
+                "Please try again or select one of our demo profiles (`Rahul Sharma`, `Sarah Jenkins`, `Vikramaditya Roy`, `Elena Rostova`, `David Miller`):",
                 reply_markup=get_auth_retry_keyboard(),
                 parse_mode="Markdown",
             )
         return
 
-    # 2. Manual Invoice / Transaction Input
+    # 2. Check if user typed a known customer name or username pattern
+    client = get_erp_client()
+    potential_matches = await client.find_customer_by_identifier("username", text)
+    if not potential_matches and len(text.split()) <= 4:
+        potential_matches = await client.find_customer_by_identifier("any", text)
+
+    if potential_matches and len(text) >= 4 and not text.startswith("/"):
+        # User entered a name / username like "Rahul Sharma", "Sarah Jenkins", "elena.rostova@finpay.eu"
+        await render_customer_past_transactions(message, session, potential_matches[0])
+        return
+
+    # 3. Manual Invoice / Transaction Input
     if session.awaiting_input == "manual_invoice":
         session.awaiting_input = None
         from agents.models.fast_classifier import FastEntityExtractor
@@ -957,8 +1149,8 @@ async def handle_user_text_input(message: Message):
         await run_investigation_workflow(message, session, inv_id, amount, user_note=text)
         return
 
-    # 3. AI Assistant Query / Natural Language Flow (e.g., "refund $134 for invoice INV-2026-001")
-    if session.awaiting_input == "issue_description" or session.is_verified:
+    # 4. AI Assistant Query / Natural Language Flow (e.g., "refund $134 for invoice INV-2026-001")
+    if session.awaiting_input == "issue_description" or session.is_verified or "refund" in text.lower() or "inv-" in text.lower():
         session.awaiting_input = None
         from agents.models.fast_classifier import FastEntityExtractor
         extracted = FastEntityExtractor.extract_entities(text)
