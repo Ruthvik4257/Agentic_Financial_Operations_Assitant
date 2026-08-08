@@ -950,20 +950,20 @@ async def handle_user_text_input(message: Message):
     # 2. Manual Invoice / Transaction Input
     if session.awaiting_input == "manual_invoice":
         session.awaiting_input = None
-        inv_match = re.search(r"(INV[-\w\d]+|TXN[-\w\d]+|\d+)", text, re.IGNORECASE)
-        inv_id = inv_match.group(1).upper() if inv_match else "INV-2026-001"
-        amount = 2350.00
+        from agents.models.fast_classifier import FastEntityExtractor
+        extracted = FastEntityExtractor.extract_entities(text)
+        inv_id = extracted.get("invoice_id") or "INV-2026-001"
+        amount = extracted.get("amount") or 134.00
         await run_investigation_workflow(message, session, inv_id, amount, user_note=text)
         return
 
-    # 3. AI Assistant Query / Natural Language Flow
+    # 3. AI Assistant Query / Natural Language Flow (e.g., "refund $134 for invoice INV-2026-001")
     if session.awaiting_input == "issue_description" or session.is_verified:
         session.awaiting_input = None
-        # Extract invoice and amount from text if present
-        inv_match = re.search(r"(INV[-\w\d]+)", text, re.IGNORECASE)
-        amt_match = re.search(r"(\d+(?:\.\d{1,2})?)", text)
-        inv_id = inv_match.group(1).upper() if inv_match else "INV-2026-001"
-        amount = float(amt_match.group(1)) if amt_match else 2350.00
+        from agents.models.fast_classifier import FastEntityExtractor
+        extracted = FastEntityExtractor.extract_entities(text)
+        inv_id = extracted.get("invoice_id") or "INV-2026-001"
+        amount = extracted.get("amount") or 134.00
 
         await run_investigation_workflow(message, session, inv_id, amount, user_note=text)
         return
