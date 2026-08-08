@@ -1,11 +1,10 @@
 # Enterprise Agentic Financial Operations Assistant (FinOps AI Employee)
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.114.2-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent_0.2.76-FF6F00.svg)](https://langchain-ai.github.io/langgraph/)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.51-D71F00.svg?logo=sqlalchemy)](https://www.sqlalchemy.org/)
+[![LangChain](https://img.shields.io/badge/LangChain-Multi--Agent_0.2.76-FF6F00.svg)](https://langchain-ai.github.io/langgraph/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB.svg?logo=react)](https://react.dev)
 [![Telegram](https://img.shields.io/badge/Telegram-aiogram_3.13-2CA5E0.svg?logo=telegram)](https://telegram.org)
-[![Docker](https://img.shields.io/badge/Docker-suryadocker0-2496ED.svg?logo=docker)](https://hub.docker.com/u/suryadocker0)
+[![Docker](https://img.shields.io/badge/Docker-docker-2496ED.svg?logo=docker)](https://hub.docker.com/u/suryadocker0)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 An autonomous, auditable, enterprise-grade AI Employee for corporate financial operations. Sitting in front of the **ERP / SQL Ledger** (the System of Record), the platform automates customer payment dispute intake, ledger reconciliation, multi-factor fraud detection, autonomous refund execution, and human-in-the-loop (HITL) approval escalation with cryptographic SHA-256 audit chaining.
