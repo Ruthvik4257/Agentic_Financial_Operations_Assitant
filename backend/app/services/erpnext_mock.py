@@ -30,6 +30,54 @@ class EmbeddedERPNextEngine(BaseERPNextClient):
                 "total_invoiced": 14750.00,
                 "lifetime_chargebacks": 0,
             },
+            "CUST-00101": {
+                "name": "CUST-00101",
+                "customer_name": "Sarah Jenkins",
+                "customer_group": "SMB Software",
+                "territory": "United States",
+                "email_id": "sarah.jenkins@techstartup.io",
+                "mobile_no": "9876500101",
+                "credit_limit": 75000.00,
+                "loyalty_tier": "Gold",
+                "total_invoiced": 22400.00,
+                "lifetime_chargebacks": 0,
+            },
+            "CUST-00102": {
+                "name": "CUST-00102",
+                "customer_name": "Vikramaditya Roy",
+                "customer_group": "Corporate Banking",
+                "territory": "India",
+                "email_id": "vikram.roy@royenterprises.in",
+                "mobile_no": "9876500102",
+                "credit_limit": 500000.00,
+                "loyalty_tier": "Platinum",
+                "total_invoiced": 89000.00,
+                "lifetime_chargebacks": 0,
+            },
+            "CUST-00103": {
+                "name": "CUST-00103",
+                "customer_name": "Elena Rostova",
+                "customer_group": "Global FinTech",
+                "territory": "United Kingdom",
+                "email_id": "elena.rostova@finpay.eu",
+                "mobile_no": "9876500103",
+                "credit_limit": 120000.00,
+                "loyalty_tier": "Platinum",
+                "total_invoiced": 31500.00,
+                "lifetime_chargebacks": 0,
+            },
+            "CUST-00104": {
+                "name": "CUST-00104",
+                "customer_name": "David Miller",
+                "customer_group": "Retail Commercial",
+                "territory": "United States",
+                "email_id": "david.miller@acmeretail.com",
+                "mobile_no": "9876500104",
+                "credit_limit": 40000.00,
+                "loyalty_tier": "Silver",
+                "total_invoiced": 11200.00,
+                "lifetime_chargebacks": 0,
+            },
             "CUST-001": {
                 "name": "CUST-001",
                 "customer_name": "Acme Corporation",
@@ -70,8 +118,8 @@ class EmbeddedERPNextEngine(BaseERPNextClient):
 
         self._issues = {}
 
-
         self._invoices = {
+            # Rahul Sharma (CUST-00045)
             "INV-2026-001": {
                 "name": "INV-2026-001",
                 "customer": "CUST-00045",
@@ -129,6 +177,170 @@ class EmbeddedERPNextEngine(BaseERPNextClient):
                         "qty": 1.0,
                         "rate": 8500.0,
                         "amount": 8500.0,
+                    }
+                ],
+            },
+            # Sarah Jenkins (CUST-00101)
+            "INV-2026-101": {
+                "name": "INV-2026-101",
+                "customer": "CUST-00101",
+                "customer_name": "Sarah Jenkins",
+                "posting_date": "2026-08-04",
+                "due_date": "2026-09-04",
+                "grand_total": 180.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "PRO-CLUSTER-TIER",
+                        "item_name": "Pro Developer Cluster Subscription",
+                        "qty": 1.0,
+                        "rate": 180.0,
+                        "amount": 180.0,
+                    }
+                ],
+            },
+            "INV-2026-102": {
+                "name": "INV-2026-102",
+                "customer": "CUST-00101",
+                "customer_name": "Sarah Jenkins",
+                "posting_date": "2026-08-05",
+                "due_date": "2026-09-05",
+                "grand_total": 95.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "DB-REPLICA-ADDON",
+                        "item_name": "Managed Database High-Availability Replica",
+                        "qty": 1.0,
+                        "rate": 95.0,
+                        "amount": 95.0,
+                    }
+                ],
+            },
+            # Vikramaditya Roy (CUST-00102)
+            "INV-2026-201": {
+                "name": "INV-2026-201",
+                "customer": "CUST-00102",
+                "customer_name": "Vikramaditya Roy",
+                "posting_date": "2026-08-06",
+                "due_date": "2026-09-06",
+                "grand_total": 14500.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "INR",
+                "items": [
+                    {
+                        "item_code": "DEDICATED-FIBER-CORP",
+                        "item_name": "Dedicated Corporate Gigabit Optical Fiber",
+                        "qty": 1.0,
+                        "rate": 14500.0,
+                        "amount": 14500.0,
+                    }
+                ],
+            },
+            "INV-2026-202": {
+                "name": "INV-2026-202",
+                "customer": "CUST-00102",
+                "customer_name": "Vikramaditya Roy",
+                "posting_date": "2026-08-07",
+                "due_date": "2026-09-07",
+                "grand_total": 3200.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "INR",
+                "items": [
+                    {
+                        "item_code": "FIREWALL-GATEWAY",
+                        "item_name": "Multi-Zone Autonomous Threat Protection",
+                        "qty": 1.0,
+                        "rate": 3200.0,
+                        "amount": 3200.0,
+                    }
+                ],
+            },
+            # Elena Rostova (CUST-00103)
+            "INV-2026-301": {
+                "name": "INV-2026-301",
+                "customer": "CUST-00103",
+                "customer_name": "Elena Rostova",
+                "posting_date": "2026-08-07",
+                "due_date": "2026-09-07",
+                "grand_total": 65.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "MICRO-SAAS-API",
+                        "item_name": "Micro-SaaS Gateway Rate Allocation",
+                        "qty": 1.0,
+                        "rate": 65.0,
+                        "amount": 65.0,
+                    }
+                ],
+            },
+            "INV-2026-302": {
+                "name": "INV-2026-302",
+                "customer": "CUST-00103",
+                "customer_name": "Elena Rostova",
+                "posting_date": "2026-08-08",
+                "due_date": "2026-09-08",
+                "grand_total": 134.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "WEBHOOK-HIGH-TP",
+                        "item_name": "High-Throughput Webhook Processing",
+                        "qty": 1.0,
+                        "rate": 134.0,
+                        "amount": 134.0,
+                    }
+                ],
+            },
+            # David Miller (CUST-00104)
+            "INV-2026-401": {
+                "name": "INV-2026-401",
+                "customer": "CUST-00104",
+                "customer_name": "David Miller",
+                "posting_date": "2026-08-07",
+                "due_date": "2026-09-07",
+                "grand_total": 149.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "POS-MERCHANT-SUB",
+                        "item_name": "Cloud POS Smart Terminal Subscription",
+                        "qty": 1.0,
+                        "rate": 149.0,
+                        "amount": 149.0,
+                    }
+                ],
+            },
+            "INV-2026-402": {
+                "name": "INV-2026-402",
+                "customer": "CUST-00104",
+                "customer_name": "David Miller",
+                "posting_date": "2026-08-08",
+                "due_date": "2026-09-08",
+                "grand_total": 750.00,
+                "outstanding_amount": 0.00,
+                "status": "Paid",
+                "currency": "USD",
+                "items": [
+                    {
+                        "item_code": "ANNUAL-HARDWARE-PKG",
+                        "item_name": "Annual Hardware Support & Warranty Pack",
+                        "qty": 1.0,
+                        "rate": 750.0,
+                        "amount": 750.0,
                     }
                 ],
             },

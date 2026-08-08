@@ -79,7 +79,7 @@ async def init_db() -> None:
             from sqlalchemy import select
             res = await session.execute(select(Customer).limit(1))
             if res.scalar_one_or_none() is None:
-                # Seed core customer accounts
+                # Seed core demo customer accounts
                 customers_dict = {
                     "CUST-00045": Customer(
                         id="CUST-00045",
@@ -91,6 +91,50 @@ async def init_db() -> None:
                         credit_limit=150000.0,
                         loyalty_tier="Platinum",
                         total_invoiced=14750.0,
+                    ),
+                    "CUST-00101": Customer(
+                        id="CUST-00101",
+                        customer_name="Sarah Jenkins",
+                        email="sarah.jenkins@techstartup.io",
+                        mobile="9876500101",
+                        customer_group="SMB Software",
+                        territory="United States",
+                        credit_limit=75000.0,
+                        loyalty_tier="Gold",
+                        total_invoiced=22400.0,
+                    ),
+                    "CUST-00102": Customer(
+                        id="CUST-00102",
+                        customer_name="Vikramaditya Roy",
+                        email="vikram.roy@royenterprises.in",
+                        mobile="9876500102",
+                        customer_group="Corporate Banking",
+                        territory="India",
+                        credit_limit=500000.0,
+                        loyalty_tier="Platinum",
+                        total_invoiced=89000.0,
+                    ),
+                    "CUST-00103": Customer(
+                        id="CUST-00103",
+                        customer_name="Elena Rostova",
+                        email="elena.rostova@finpay.eu",
+                        mobile="9876500103",
+                        customer_group="Global FinTech",
+                        territory="United Kingdom",
+                        credit_limit=120000.0,
+                        loyalty_tier="Platinum",
+                        total_invoiced=31500.0,
+                    ),
+                    "CUST-00104": Customer(
+                        id="CUST-00104",
+                        customer_name="David Miller",
+                        email="david.miller@acmeretail.com",
+                        mobile="9876500104",
+                        customer_group="Retail Commercial",
+                        territory="United States",
+                        credit_limit=40000.0,
+                        loyalty_tier="Silver",
+                        total_invoiced=11200.0,
                     ),
                     "CUST-001": Customer(
                         id="CUST-001",
@@ -130,9 +174,9 @@ async def init_db() -> None:
                 # Generate realistic customer directory up to 180+ accounts
                 first_names = ["Amit", "Priya", "Vikram", "Sneha", "Rohan", "Ananya", "Karan", "Pooja", "Arjun", "Neha", "Siddharth", "Meera", "Aditya", "Riya", "Varun"]
                 last_names = ["Patel", "Verma", "Singh", "Reddy", "Mehta", "Nair", "Gupta", "Deshmukh", "Iyer", "Chopra", "Kulkarni", "Sharma", "Bhatt", "Kapoor", "Joshi"]
-                for i in range(4, 200):
+                for i in range(5, 200):
                     cid = f"CUST-{i:05d}"
-                    if cid in customers_dict or cid == "CUST-00045":
+                    if cid in customers_dict or cid == "CUST-00045" or cid in ["CUST-00101", "CUST-00102", "CUST-00103", "CUST-00104"]:
                         continue
                     fn = first_names[i % len(first_names)]
                     ln = last_names[(i // len(first_names)) % len(last_names)]
@@ -151,10 +195,11 @@ async def init_db() -> None:
                     )
 
                 for c in customers_dict.values():
-                    session.add(c)
+                    await session.merge(c)
 
                 # Seed invoices
                 invoices_seed = [
+                    # Invoices for Member 1: Rahul Sharma (CUST-00045)
                     SalesInvoice(
                         id="INV-2026-001",
                         customer_id="CUST-00045",
@@ -200,42 +245,137 @@ async def init_db() -> None:
                         qty=1.0,
                         rate=8500.0,
                     ),
+                    # Invoices for Member 2: Sarah Jenkins (CUST-00101)
                     SalesInvoice(
-                        id="INV-2026-102",
-                        customer_id="CUST-002",
-                        customer_name="Globex Logistics Corp",
-                        posting_date="2026-08-05",
-                        due_date="2026-09-05",
-                        grand_total=2500.0,
+                        id="INV-2026-101",
+                        customer_id="CUST-00101",
+                        customer_name="Sarah Jenkins",
+                        posting_date="2026-08-04",
+                        due_date="2026-09-04",
+                        grand_total=180.0,
                         outstanding_amount=0.0,
                         status="Paid",
                         currency="USD",
-                        item_code="LOGISTICS-API-BANDWIDTH",
-                        item_name="Logistics API High-Throughput Tier",
+                        item_code="PRO-CLUSTER-TIER",
+                        item_name="Pro Developer Cluster Subscription",
                         qty=1.0,
-                        rate=2500.0,
+                        rate=180.0,
                     ),
                     SalesInvoice(
-                        id="INV-2026-999",
-                        customer_id="CUST-003",
-                        customer_name="Initech Software Labs",
-                        posting_date="2026-08-07",
-                        due_date="2026-08-21",
-                        grand_total=45.0,
+                        id="INV-2026-102",
+                        customer_id="CUST-00101",
+                        customer_name="Sarah Jenkins",
+                        posting_date="2026-08-05",
+                        due_date="2026-09-05",
+                        grand_total=95.0,
                         outstanding_amount=0.0,
                         status="Paid",
                         currency="USD",
-                        item_code="SaaS-STARTER",
-                        item_name="SaaS Starter Micro-Tier",
+                        item_code="DB-REPLICA-ADDON",
+                        item_name="Managed Database High-Availability Replica",
                         qty=1.0,
-                        rate=45.0,
+                        rate=95.0,
+                    ),
+                    # Invoices for Member 3: Vikramaditya Roy (CUST-00102)
+                    SalesInvoice(
+                        id="INV-2026-201",
+                        customer_id="CUST-00102",
+                        customer_name="Vikramaditya Roy",
+                        posting_date="2026-08-06",
+                        due_date="2026-09-06",
+                        grand_total=14500.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="INR",
+                        item_code="DEDICATED-FIBER-CORP",
+                        item_name="Dedicated Corporate Gigabit Optical Fiber",
+                        qty=1.0,
+                        rate=14500.0,
+                    ),
+                    SalesInvoice(
+                        id="INV-2026-202",
+                        customer_id="CUST-00102",
+                        customer_name="Vikramaditya Roy",
+                        posting_date="2026-08-07",
+                        due_date="2026-09-07",
+                        grand_total=3200.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="INR",
+                        item_code="FIREWALL-GATEWAY",
+                        item_name="Multi-Zone Autonomous Threat Protection",
+                        qty=1.0,
+                        rate=3200.0,
+                    ),
+                    # Invoices for Member 4: Elena Rostova (CUST-00103)
+                    SalesInvoice(
+                        id="INV-2026-301",
+                        customer_id="CUST-00103",
+                        customer_name="Elena Rostova",
+                        posting_date="2026-08-07",
+                        due_date="2026-09-07",
+                        grand_total=65.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="USD",
+                        item_code="MICRO-SAAS-API",
+                        item_name="Micro-SaaS Gateway Rate Allocation",
+                        qty=1.0,
+                        rate=65.0,
+                    ),
+                    SalesInvoice(
+                        id="INV-2026-302",
+                        customer_id="CUST-00103",
+                        customer_name="Elena Rostova",
+                        posting_date="2026-08-08",
+                        due_date="2026-09-08",
+                        grand_total=134.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="USD",
+                        item_code="WEBHOOK-HIGH-TP",
+                        item_name="High-Throughput Webhook Processing",
+                        qty=1.0,
+                        rate=134.0,
+                    ),
+                    # Invoices for Member 5: David Miller (CUST-00104)
+                    SalesInvoice(
+                        id="INV-2026-401",
+                        customer_id="CUST-00104",
+                        customer_name="David Miller",
+                        posting_date="2026-08-07",
+                        due_date="2026-09-07",
+                        grand_total=149.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="USD",
+                        item_code="POS-MERCHANT-SUB",
+                        item_name="Cloud POS Smart Terminal Subscription",
+                        qty=1.0,
+                        rate=149.0,
+                    ),
+                    SalesInvoice(
+                        id="INV-2026-402",
+                        customer_id="CUST-00104",
+                        customer_name="David Miller",
+                        posting_date="2026-08-08",
+                        due_date="2026-09-08",
+                        grand_total=750.0,
+                        outstanding_amount=0.0,
+                        status="Paid",
+                        currency="USD",
+                        item_code="ANNUAL-HARDWARE-PKG",
+                        item_name="Annual Hardware Support & Warranty Pack",
+                        qty=1.0,
+                        rate=750.0,
                     ),
                 ]
                 for inv in invoices_seed:
-                    session.add(inv)
+                    await session.merge(inv)
 
-                # Seed initial payment entries (including duplicate captures for INV-2026-001)
+                # Seed initial payment entries (including duplicate captures)
                 payments_seed = [
+                    # Payments for Rahul Sharma
                     PaymentEntry(
                         id="PE-2026001A",
                         payment_type="Receive",
@@ -262,13 +402,38 @@ async def init_db() -> None:
                         posting_date="2026-08-01",
                         remarks="Duplicate gateway capture anomaly (2350.00 INR)",
                     ),
+                    # Payments for Sarah Jenkins
+                    PaymentEntry(
+                        id="PE-2026101A",
+                        payment_type="Receive",
+                        party_type="Customer",
+                        party_id="CUST-00101",
+                        invoice_id="INV-2026-101",
+                        paid_amount=180.0,
+                        received_amount=180.0,
+                        status="Submitted",
+                        reference_no="TX-PAY-INV-2026-101",
+                        posting_date="2026-08-04",
+                        remarks="Stripe Direct Debit Capture ($180.00)",
+                    ),
+                    PaymentEntry(
+                        id="PE-2026101B-DUP",
+                        payment_type="Receive",
+                        party_type="Customer",
+                        party_id="CUST-00101",
+                        invoice_id="INV-2026-101",
+                        paid_amount=180.0,
+                        received_amount=180.0,
+                        status="Submitted",
+                        reference_no="TX-PAY-INV-2026-101-DUP",
+                        posting_date="2026-08-04",
+                        remarks="Duplicate automated webhook capture ($180.00)",
+                    ),
                 ]
                 for pe in payments_seed:
-                    session.add(pe)
+                    await session.merge(pe)
 
                 await session.commit()
     except Exception as e:
         import logging
         logging.getLogger("FinOpsDB").warning("Initial seed already present or completed: %s", e)
-
-
