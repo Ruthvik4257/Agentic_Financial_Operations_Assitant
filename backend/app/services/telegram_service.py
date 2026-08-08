@@ -671,22 +671,29 @@ async def handle_auth_retry(query: CallbackQuery):
     elif action == "other":
         await prompt_identity_verification(query.message, session)
     elif action == "human":
-        # Create Human Support Ticket in ERPNext via FastAPI
+        # Create Human Support Ticket in SQL Ledger via FastAPI
         client = get_erp_client()
         ticket = await client.create_support_issue(
-            customer_id="GUEST",
-            subject="Telegram Human Support Request (Unverified Account)",
-            description=f"User {query.from_user.id} requested human banking support.",
+            customer_id=session.customer_id or "GUEST",
+            subject="Telegram Human Support Request (Priority Escalation)",
+            description=f"User {query.from_user.id} requested dedicated human banking support on mobile 8885036349.",
             category="Customer Verification",
         )
         await query.message.edit_text(
-            f"🧑‍💼 *Human Support Request Logged*\n\n"
-            f"A representative from our customer desk has been assigned.\n\n"
-            f"• Ticket Reference: `{ticket.get('name', 'TKT-2026-009')}`\n"
-            f"• Support Hotline: `1800-2026-NOVA`\n\n"
-            f"We will assist you within 15 minutes.",
+            f"🧑‍💼 *Human Support Request Logged & Assigned*\n\n"
+            f"A dedicated senior financial operations officer has been assigned to your case.\n\n"
+            f"• *Ticket Reference*: `{ticket.get('name', 'TKT-2026-009')}`\n"
+            f"• *Support Officer Mobile*: `+91 8885036349` (`8885036349`)\n"
+            f"• *Hotline Hours*: `24x7 Priority Desk`\n\n"
+            f"You can contact your representative directly via the buttons below:",
             reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[[InlineKeyboardButton(text="🏠 Main Menu", callback_data="nav:main_menu")]]
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="📞 Call Officer (8885036349)", url="tel:+918885036349"),
+                        InlineKeyboardButton(text="💬 WhatsApp (8885036349)", url="https://wa.me/918885036349"),
+                    ],
+                    [InlineKeyboardButton(text="🏠 Main Menu", callback_data="nav:main_menu")],
+                ]
             ),
             parse_mode="Markdown",
         )
@@ -1091,6 +1098,49 @@ async def handle_refund_command(message: Message):
     inv_id = args[1].strip().upper() if len(args) > 1 else "INV-2026-001"
     amt = float(args[2]) if len(args) > 2 else 2350.00
     await run_investigation_workflow(message, session, inv_id, amt, user_note=f"Command /refund {inv_id}")
+
+
+@router.message(Command("support"))
+@router.message(Command("human"))
+@router.message(Command("call"))
+@router.message(Command("contact"))
+@router.message(Command("helpdesk"))
+async def handle_support_command(message: Message):
+    """
+    Direct slash command: /support, /human, or /call
+    Displays direct human support contact mobile number 8885036349 with call and WhatsApp links.
+    """
+    session = get_or_create_session(message.from_user.id)
+    client = get_erp_client()
+    ticket = await client.create_support_issue(
+        customer_id=session.customer_id or "GUEST",
+        subject="Direct Telegram Command Human Support Request",
+        description=f"User {message.from_user.id} requested direct human support via /support command. Mobile: 8885036349",
+        category="Customer Support",
+    )
+
+    text = (
+        "🧑‍💼 *NovaBank Senior Financial Support Desk*\n\n"
+        "Need immediate human assistance with your account, transaction, or refund?\n\n"
+        "• *Support Representative*: `Senior FinOps Specialist`\n"
+        "• *Direct Mobile / Phone*: `+91 8885036349` (`8885036349`)\n"
+        f"• *Assigned Ticket*: `{ticket.get('name', 'TKT-2026-SUPPORT')}`\n"
+        "• *Availability*: `24x7 Priority Support`\n\n"
+        "You can call or message our support team directly using the buttons below:"
+    )
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📞 Call Officer: 8885036349", url="tel:+918885036349"),
+                InlineKeyboardButton(text="💬 WhatsApp: 8885036349", url="https://wa.me/918885036349"),
+            ],
+            [
+                InlineKeyboardButton(text="👤 Past Transactions", callback_data="menu:user_lookup"),
+                InlineKeyboardButton(text="🏠 Main Menu", callback_data="nav:main_menu"),
+            ],
+        ]
+    )
+    await message.answer(text, reply_markup=keyboard, parse_mode="Markdown")
 
 
 # ==============================================================================
